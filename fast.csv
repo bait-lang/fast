@@ -1,0 +1,6 @@
+hash,date,total,parse,depgraph,check,transform,gen,max_rss_kb,out_lines,src_lines,subject
+f5b52f05f9492b7ed9ee7db883efee9d57b41dea,2026-10-19,,,,,,,,,,"builtin [js]: fix i8 and i16 wrap (#359)"
+79832b9fd1bfaab8b4361c042728e7581b5f194c,2026-10-19,280,118,0,46,7,69,121808,12627,12876,"gen [js]: default i64 and u64 to BigInt zero"
+f9a829dbb2ae78dddb53f415402daec89df4beb8,2026-10-19,270,117,1,45,6,73,121548,12627,12877,"tools: add, ""quoted"" fast"
+eaa2c617218767a238abb04f50bc989df57ce67b,2026-10-19,286,118,0,53,10,78,122472,12627,12877,"fast: measure new commits on main and store results as CSV"
+ad086bc7e8e489aaaedf924899e39cade8f98af0,2026-10-19,276,116,0,47,7,76,130040,12627,12877,"fast: render results as index.html"
