@@ -1,2 +1,4 @@
-hash,date,total,parse,depgraph,check,transform,gen,max_rss_kb,out_lines,src_lines,subject
-f5b52f05f9492b7ed9ee7db883efee9d57b41dea,2026-10-19,,,,,,,,,,"builtin [js]: fix i8 and i16 wrap (#359)"
+hash,date,total,parse,depgraph,check,transform,gen,max_rss_kb,out_lines,out_bytes,src_lines,subject
+f5b52f05f9492b7ed9ee7db883efee9d57b41dea,2026-10-19,,,,,,,,,,,"builtin [js]: fix i8 and i16 wrap (#359)"
+8c56933fc23433d85a1fe8b43887405282444844,2026-10-19,211,86,0,39,5,57,108360,12627,459109,12876,"builtin, gen [js]: fix i64/u64 default values and all_after (#362)"
+f742a4db94772b039cbab98780b9f7653f0dca9e,2026-10-30,219,91,,38,7,59,109280,12625,459024,12875,"tools: add fast.bt (#363)"

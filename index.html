@@ -3,189 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>bait fast: compiler performance</title>
-<style>
-	.page {
-		color-scheme: light;
-		--surface-0: #f4f3f0;
-		--surface-1: #fcfcfb;
-		--border: #e2e1dc;
-		--grid: #ecebe7;
-		--text-primary: #0b0b0b;
-		--text-secondary: #52514e;
-		--text-muted: #7a7974;
-		--series-1: #2a78d6;
-		--series-2: #eb6834;
-		--series-3: #1baf7a;
-		--series-4: #eda100;
-		--series-5: #e87ba4;
-		--good: #0ca30c;
-		--good-text: #006300;
-		--critical: #d03b3b;
-		--critical-text: #b02a2a;
-		--row-hover: #f0efec;
-	}
-	@media (prefers-color-scheme: dark) {
-		:root:where(:not([data-theme="light"])) .page {
-			color-scheme: dark;
-			--surface-0: #121211;
-			--surface-1: #1a1a19;
-			--border: #31312e;
-			--grid: #2a2a28;
-			--text-primary: #f0efec;
-			--text-secondary: #c3c2b7;
-			--text-muted: #8f8e86;
-			--series-1: #3987e5;
-			--series-2: #d95926;
-			--series-3: #199e70;
-			--series-4: #c98500;
-			--series-5: #d55181;
-			--good-text: #3fc23f;
-			--critical-text: #ef7777;
-			--row-hover: #24241f;
-		}
-	}
-	:root[data-theme="dark"] .page {
-		color-scheme: dark;
-		--surface-0: #121211;
-		--surface-1: #1a1a19;
-		--border: #31312e;
-		--grid: #2a2a28;
-		--text-primary: #f0efec;
-		--text-secondary: #c3c2b7;
-		--text-muted: #8f8e86;
-		--series-1: #3987e5;
-		--series-2: #d95926;
-		--series-3: #199e70;
-		--series-4: #c98500;
-		--series-5: #d55181;
-		--good-text: #3fc23f;
-		--critical-text: #ef7777;
-		--row-hover: #24241f;
-	}
-
-	html, body { margin: 0; }
-	.page {
-		background: var(--surface-0);
-		color: var(--text-primary);
-		font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-		font-size: 14px;
-		line-height: 1.45;
-		padding: 24px;
-		border-radius: 12px;
-	}
-	.wrap { max-width: 1040px; margin: 0 auto; }
-	code, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; }
-	a { color: var(--series-1); text-decoration: none; }
-	a:hover { text-decoration: underline; }
-
-	header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-	header h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
-	header h1 span { color: var(--text-muted); font-weight: 400; }
-	header .meta { color: var(--text-secondary); font-size: 12.5px; }
-
-	.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-	.tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
-	.tile .label { color: var(--text-secondary); font-size: 12px; }
-	.tile .value { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-	.tile .value small { font-size: 14px; font-weight: 400; color: var(--text-secondary); margin-left: 2px; }
-	.tile .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-
-	.delta { display: inline-flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-	.delta.up { color: var(--critical-text); }
-	.delta.down { color: var(--good-text); }
-	.delta.flat { color: var(--text-muted); }
-	.delta svg { width: 10px; height: 10px; flex: none; }
-
-	.charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
-	.chart-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-	.chart-head h2 { font-size: 14px; margin: 0; font-weight: 600; }
-	.chart-head .hint { font-size: 12px; color: var(--text-muted); }
-	.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-secondary); }
-	.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
-	.chart { position: relative; }
-	.chart svg { display: block; width: 100%; overflow: visible; }
-	.axis text { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-	.gridline { stroke: var(--grid); stroke-width: 1; }
-	.baseline { stroke: var(--border); stroke-width: 1; }
-
-	.tooltip {
-		position: absolute; pointer-events: none; z-index: 5;
-		background: var(--surface-1); color: var(--text-primary);
-		border: 1px solid var(--border); border-radius: 8px;
-		box-shadow: 0 4px 16px rgba(0,0,0,.12);
-		padding: 8px 10px; font-size: 12px; min-width: 180px; max-width: 280px;
-		opacity: 0; transition: opacity .08s;
-	}
-	.tooltip.show { opacity: 1; }
-	.tooltip .t-head { font-weight: 600; margin-bottom: 2px; }
-	.tooltip .t-sub { color: var(--text-secondary); margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	.tooltip .t-row { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
-	.tooltip .t-row span:first-child { color: var(--text-secondary); }
-	.tooltip .t-row i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
-	.tooltip .t-total { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 4px; font-weight: 600; }
-
-	.table-card { padding: 0; overflow: hidden; }
-	.table-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 14px 16px 10px; }
-	.table-head h2 { font-size: 14px; margin: 0; }
-	.filters { display: flex; gap: 6px; }
-	.filters button {
-		font: inherit; font-size: 12px; color: var(--text-secondary);
-		background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 3px 9px; cursor: pointer;
-	}
-	.filters button[aria-pressed="true"] { color: var(--text-primary); background: var(--row-hover); border-color: var(--text-muted); }
-	.scroll { overflow-x: auto; }
-	table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-	th, td { padding: 7px 10px; text-align: right; white-space: nowrap; border-top: 1px solid var(--grid); }
-	th { font-size: 11.5px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; border-top: 1px solid var(--border); }
-	th:first-child, td:first-child { padding-left: 16px; }
-	th:last-child, td:last-child { padding-right: 16px; }
-	td.l, th.l { text-align: left; }
-	td.subject { max-width: 220px; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
-	td.date { color: var(--text-muted); }
-	td.total { font-weight: 600; }
-	td .cell { display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
-	td .cell .delta { font-size: 11px; }
-	tbody tr:hover { background: var(--row-hover); }
-	tbody tr.hl { background: var(--row-hover); }
-	tr.failed td { color: var(--text-muted); }
-	.badge { font-size: 11px; border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; color: var(--critical-text); }
-	.sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
-
-	footer { margin-top: 14px; font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-
-	.charts .wide { grid-column: 1 / -1; }
-	.chart .empty { color: var(--text-muted); font-size: 12px; padding: 24px 0; text-align: center; }
-	@media (max-width: 720px) {
-		.tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-		.charts { grid-template-columns: minmax(0, 1fr); }
-		td.subject { max-width: 160px; }
-	}
-</style>
+<title>Is Bait fast?</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="page">
 <div class="wrap">
 
 	<header>
-		<h1>bait fast <span>· compiler performance</span></h1>
-		<div class="meta">Self-compile of <code>cli/bait.bt</code> on the JS backend · min of 1 runs (time and peak RSS) · linux x64</div>
+		<h1>Is Bait fast?</h1>
+		<div class="sub">
+			<div class="info"><span>Measurement</span><b>Minimum of 5 runs</b></div>
+			<div class="info"><span>Machine</span><b>GitHub Actions runner</b></div>
+			<div class="info"><span>Last run</span><b>2026-10-30 19:26 UTC</b></div>
+			<div class="info"><span>Source</span><b><a href="https://github.com/bait-lang/bait/tree/main/cli/tools/fast">cli/tools/fast</a></b></div>
+		</div>
+		<div class="filters" id="range" role="group" aria-label="Commits shown">
+			<button type="button" data-r="recent" aria-pressed="true">Last 30, weekly, monthly</button>
+			<button type="button" data-r="all" aria-pressed="false">Every commit</button>
+		</div>
 	</header>
-
-	<section class="tiles" id="tiles"></section>
 
 	<section class="charts">
 		<div class="card">
 			<div class="chart-head">
-				<h2>Total self-compile time</h2>
-				<span class="hint">ms per commit, lower is better</span>
+				<h2>Self-compile time [ms]</h2>
 			</div>
 			<div class="chart" id="line"></div>
 		</div>
 		<div class="card">
 			<div class="chart-head">
-				<h2>Peak memory (RSS)</h2>
-				<span class="hint">MB per commit, lower is better</span>
+				<h2>Peak memory [MB]</h2>
 			</div>
 			<div class="chart" id="mem"></div>
 		</div>
@@ -201,90 +49,83 @@
 	<section class="card table-card">
 		<div class="table-head">
 			<h2>Commits</h2>
-			<div class="filters" role="group" aria-label="Filter rows">
-				<button type="button" data-f="all" aria-pressed="true">All</button>
-				<button type="button" data-f="changed" aria-pressed="false">±5% only</button>
-			</div>
 		</div>
 		<div class="scroll">
 			<table>
 				<thead>
 					<tr>
-						<th class="l">Commit</th>
 						<th class="l">Date</th>
-						<th class="l">Subject</th>
+						<th class="l">Commit</th>
+						<th class="l">Message</th>
 						<th>Total</th>
 						<th><i class="sw" style="background:var(--series-1)"></i>Parse</th>
-						<th><i class="sw" style="background:var(--series-2)"></i>Depgraph</th>
 						<th><i class="sw" style="background:var(--series-3)"></i>Check</th>
 						<th><i class="sw" style="background:var(--series-4)"></i>Transform</th>
 						<th><i class="sw" style="background:var(--series-5)"></i>Gen</th>
-						<th>Peak RSS</th>
+						<th>Peak memory</th>
 						<th>Out lines</th>
+						<th>bait.js size</th>
 						<th>Lines/s</th>
 					</tr>
 				</thead>
 				<tbody id="rows">
-					<tr data-hash="ad086bc7e8e489aaaedf924899e39cade8f98af0" data-changed="1"><td class="l"><a class="mono" href="https://github.com/bait-lang/bait/commit/ad086bc7e8e489aaaedf924899e39cade8f98af0">ad086bc</a></td><td class="l date">2026-10-19</td><td class="l subject" title="fast: render results as index.html">fast: render results as index.html</td><td class="total"><span class="cell">276<span class="delta flat">-3.5%</span></span></td><td><span class="cell">116<span class="delta flat">-1.7%</span></span></td><td><span class="cell">0</span></td><td><span class="cell">47<span class="delta down" title="better"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 9 1 2h8z" fill="currentColor"/></svg>-11.3%</span></span></td><td><span class="cell">7<span class="delta down" title="better"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 9 1 2h8z" fill="currentColor"/></svg>-30.0%</span></span></td><td><span class="cell">76<span class="delta flat">-2.6%</span></span></td><td><span class="cell">127.0 MB<span class="delta up" title="worse"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 8H1z" fill="currentColor"/></svg>+6.2%</span></span></td><td>12,627</td><td>52,345</td></tr>
-					<tr data-hash="eaa2c617218767a238abb04f50bc989df57ce67b" data-changed="1"><td class="l"><a class="mono" href="https://github.com/bait-lang/bait/commit/eaa2c617218767a238abb04f50bc989df57ce67b">eaa2c61</a></td><td class="l date">2026-10-19</td><td class="l subject" title="fast: measure new commits on main and store results as CSV">fast: measure new commits on main and store results as CSV</td><td class="total"><span class="cell">286<span class="delta up" title="worse"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 8H1z" fill="currentColor"/></svg>+5.9%</span></span></td><td><span class="cell">118<span class="delta flat">+0.9%</span></span></td><td><span class="cell">0<span class="delta flat">-100.0%</span></span></td><td><span class="cell">53<span class="delta up" title="worse"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 8H1z" fill="currentColor"/></svg>+17.8%</span></span></td><td><span class="cell">10<span class="delta up" title="worse"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 8H1z" fill="currentColor"/></svg>+66.7%</span></span></td><td><span class="cell">78<span class="delta up" title="worse"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 8H1z" fill="currentColor"/></svg>+6.8%</span></span></td><td><span class="cell">119.6 MB<span class="delta flat">+0.8%</span></span></td><td>12,627</td><td>49,718</td></tr>
-					<tr data-hash="f9a829dbb2ae78dddb53f415402daec89df4beb8" data-changed="1"><td class="l"><a class="mono" href="https://github.com/bait-lang/bait/commit/f9a829dbb2ae78dddb53f415402daec89df4beb8">f9a829d</a></td><td class="l date">2026-10-19</td><td class="l subject" title="tools: add, &quot;quoted&quot; fast">tools: add, &quot;quoted&quot; fast</td><td class="total"><span class="cell">270<span class="delta flat">-3.6%</span></span></td><td><span class="cell">117<span class="delta flat">-0.8%</span></span></td><td><span class="cell">1</span></td><td><span class="cell">45<span class="delta flat">-2.2%</span></span></td><td><span class="cell">6<span class="delta flat">-14.3%</span></span></td><td><span class="cell">73<span class="delta up" title="worse"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 8H1z" fill="currentColor"/></svg>+5.8%</span></span></td><td><span class="cell">118.7 MB<span class="delta flat">-0.2%</span></span></td><td>12,627</td><td>53,210</td></tr>
-					<tr data-hash="79832b9fd1bfaab8b4361c042728e7581b5f194c"><td class="l"><a class="mono" href="https://github.com/bait-lang/bait/commit/79832b9fd1bfaab8b4361c042728e7581b5f194c">79832b9</a></td><td class="l date">2026-10-19</td><td class="l subject" title="gen [js]: default i64 and u64 to BigInt zero">gen [js]: default i64 and u64 to BigInt zero</td><td class="total"><span class="cell">280</span></td><td><span class="cell">118</span></td><td><span class="cell">0</span></td><td><span class="cell">46</span></td><td><span class="cell">7</span></td><td><span class="cell">69</span></td><td><span class="cell">119.0 MB</span></td><td>12,627</td><td>53,650</td></tr>
-					<tr class="failed" data-hash="f5b52f05f9492b7ed9ee7db883efee9d57b41dea"><td class="l"><a class="mono" href="https://github.com/bait-lang/bait/commit/f5b52f05f9492b7ed9ee7db883efee9d57b41dea">f5b52f0</a></td><td class="l date">2026-10-19</td><td class="l subject" title="builtin [js]: fix i8 and i16 wrap (#359)">builtin [js]: fix i8 and i16 wrap (#359)</td><td colspan="9" style="text-align:left"><span class="badge">build failed</span></td></tr>
+					<tr data-hash="f742a4db94772b039cbab98780b9f7653f0dca9e"><td class="l date">2026-10-30</td><td class="l"><a class="mono" href="https://github.com/bait-lang/bait/commit/f742a4db94772b039cbab98780b9f7653f0dca9e">f742a4d</a></td><td class="l subject" title="tools: add fast.bt (#363)">tools: add fast.bt (#363)</td><td class="total"><span class="cell">219 ms<span class="delta flat">+8 ms (+3.8%)</span></span></td><td><span class="cell">91 ms<span class="delta up" title="worse">+5 ms (+5.8%)</span></span></td><td><span class="cell">38 ms</span></td><td><span class="cell">7 ms<span class="delta flat">+2 ms (+40.0%)</span></span></td><td><span class="cell">59 ms<span class="delta flat">+2 ms (+3.5%)</span></span></td><td><span class="cell">106.7 MB</span></td><td>12,625</td><td><span class="cell">448.3 KB</span></td><td>66,025</td></tr>
+					<tr data-hash="8c56933fc23433d85a1fe8b43887405282444844"><td class="l date">2026-10-19</td><td class="l"><a class="mono" href="https://github.com/bait-lang/bait/commit/8c56933fc23433d85a1fe8b43887405282444844">8c56933</a></td><td class="l subject" title="builtin, gen [js]: fix i64/u64 default values and all_after (#362)">builtin, gen [js]: fix i64/u64 default values and all_after (#362)</td><td class="total"><span class="cell">211 ms</span></td><td><span class="cell">86 ms</span></td><td><span class="cell">39 ms</span></td><td><span class="cell">5 ms</span></td><td><span class="cell">57 ms</span></td><td><span class="cell">105.8 MB</span></td><td>12,627</td><td><span class="cell">448.3 KB</span></td><td>68,855</td></tr>
 				</tbody>
 			</table>
 		</div>
 	</section>
 
-	<footer>
-		<span>Data: <a href="fast.csv">fast.csv</a> · Source: <a href="https://github.com/bait-lang/bait/tree/main/cli/tools/fast">cli/tools/fast</a></span>
-		<span>Last run 2026-10-19 15:36 UTC · Δ vs previous commit, ±5% highlighted</span>
-	</footer>
-
 </div>
 </div>
 
 <script>
-// [hash, date, subject, total, parse, depgraph, check, transform, gen, max_rss_kb, out_lines, src_lines], oldest first
+// [hash, date, subject, total, parse, check, transform, gen, max_memory_kb, out_lines, out_bytes, src_lines], oldest first
 const DATA = [
 ["f5b52f05f9492b7ed9ee7db883efee9d57b41dea", "2026-10-19", "builtin [js]: fix i8 and i16 wrap (#359)", null, null, null, null, null, null, null, null, null],
-["79832b9fd1bfaab8b4361c042728e7581b5f194c", "2026-10-19", "gen [js]: default i64 and u64 to BigInt zero", 280, 118, 0, 46, 7, 69, 121808, 12627, 12876],
-["f9a829dbb2ae78dddb53f415402daec89df4beb8", "2026-10-19", "tools: add, \"quoted\" fast", 270, 117, 1, 45, 6, 73, 121548, 12627, 12877],
-["eaa2c617218767a238abb04f50bc989df57ce67b", "2026-10-19", "fast: measure new commits on main and store results as CSV", 286, 118, 0, 53, 10, 78, 122472, 12627, 12877],
-["ad086bc7e8e489aaaedf924899e39cade8f98af0", "2026-10-19", "fast: render results as index.html", 276, 116, 0, 47, 7, 76, 130040, 12627, 12877]
+["8c56933fc23433d85a1fe8b43887405282444844", "2026-10-19", "builtin, gen [js]: fix i64/u64 default values and all_after (#362)", 211, 86, 39, 5, 57, 108360, 12627, 459109, 12876],
+["f742a4db94772b039cbab98780b9f7653f0dca9e", "2026-10-30", "tools: add fast.bt (#363)", 219, 91, 38, 7, 59, 109280, 12625, 459024, 12875]
 ];
-const REPO = 'https://github.com/bait-lang/bait/commit/';
 const THRESHOLD = 5;
 const MIN_DIFF = 3;
+const HIDE_BELOW = 3;
 const STAGES = [
 	['parse', 'Parse', '--series-1'],
-	['depgraph', 'Depgraph', '--series-2'],
 	['check', 'Check', '--series-3'],
 	['transform', 'Transform', '--series-4'],
 	['gen', 'Gen', '--series-5'],
 ];
 
-const rows = DATA.map(([hash, date, subject, total, parse, depgraph, check, transform, gen, rssKb, outLines, srcLines]) => {
-	const r = { hash, short: hash.slice(0, 7), date, subject, failed: total === null, total, parse, depgraph, check, transform, gen, outLines, srcLines };
+const rows = DATA.map(([hash, date, subject, total, parse, check, transform, gen, memKb, outLines, outBytes, srcLines]) => {
+	const r = { hash, short: hash.slice(0, 7), date, subject, failed: total === null, total, parse, check, transform, gen, outLines, outBytes, srcLines };
 	if (r.failed) return r;
-	r.rss = Math.round(rssKb / 1024 * 10) / 10;
-	const stageSum = STAGES.reduce((s, [k]) => s + r[k], 0);
-	r.lps = stageSum > 0 ? Math.round(srcLines / (stageSum / 1000)) : 0;
+	r.memory = Math.round(memKb / 1024 * 10) / 10;
 	return r;
 });
 const ok = rows.filter(r => !r.failed);
+// Default view: the last RECENT commits, before them the last commit of each week
+// within WEEKLY_DAYS of the newest commit, and the last commit of each month before that
+const RECENT = 30;
+const WEEKLY_DAYS = 365;
+const day = (date) => Date.parse(date) / 864e5;
+const newest = ok.length ? day(ok[ok.length - 1].date) : 0;
+const bucket = (date) => newest - day(date) < WEEKLY_DAYS
+	? 'w' + Math.floor((day(date) + 3) / 7) // weeks start on Monday
+	: 'm' + date.slice(0, 7);
+const recent = ok.filter((r, i) => i >= ok.length - RECENT || bucket(r.date) !== bucket(ok[i + 1].date));
+let shown = recent;
 
 // --- helpers ---
 const css = (v) => getComputedStyle(document.querySelector('.page')).getPropertyValue(v).trim();
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const ARROW_UP = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1 9 8H1z" fill="currentColor"/></svg>';
-const ARROW_DOWN = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 9 1 2h8z" fill="currentColor"/></svg>';
 const isChange = (cur, prev) => prev > 0 && Math.abs(cur - prev) >= MIN_DIFF && Math.abs(cur - prev) / prev * 100 >= THRESHOLD;
 function delta(cur, prev) {
 	if (prev == null || !(prev > 0)) return '';
 	const pct = (cur - prev) / prev * 100;
+	if (Math.abs(pct) < HIDE_BELOW) return '';
 	const txt = (pct > 0 ? '+' : '') + pct.toFixed(1) + '%';
-	if (isChange(cur, prev) && pct > 0) return `<span class="delta up" title="worse">${ARROW_UP}${txt}</span>`;
-	if (isChange(cur, prev) && pct < 0) return `<span class="delta down" title="better">${ARROW_DOWN}${txt}</span>`;
+	if (isChange(cur, prev) && pct > 0) return `<span class="delta up" title="worse">${txt}</span>`;
+	if (isChange(cur, prev) && pct < 0) return `<span class="delta down" title="better">${txt}</span>`;
 	return `<span class="delta flat">${txt}</span>`;
 }
 const fmt = (n) => n.toLocaleString('en-US');
@@ -318,15 +159,20 @@ function tooltipFor(container) {
 		hide() { t.classList.remove('show'); },
 	};
 }
+// Separate line for a change, skipped if there is none
+const diffRow = (d) => d ? `<div class="t-row t-diff"><span>vs previous</span><span>${d}</span></div>` : '';
 function tipHtml(r) {
 	const i = ok.indexOf(r);
 	const prev = i > 0 ? ok[i - 1] : null;
 	let h = `<div class="t-head"><span class="mono">${r.short}</span> · ${r.date}</div><div class="t-sub">${esc(r.subject)}</div>`;
 	for (const [k, label, v] of STAGES) {
+		if (r[k] == null) continue; // stage didn't exist yet
 		h += `<div class="t-row"><span><i style="background:var(${v})"></i>${label}</span><span>${fmt(r[k])} ms</span></div>`;
 	}
-	h += `<div class="t-row t-total"><span>Total</span><span>${fmt(r.total)} ms ${prev ? delta(r.total, prev.total) : ''}</span></div>`;
-	h += `<div class="t-row"><span>Peak RSS</span><span>${r.rss.toFixed(1)} MB ${prev ? delta(r.rss * 1024, prev.rss * 1024) : ''}</span></div>`;
+	h += `<div class="t-row t-total"><span>Total</span><span>${fmt(r.total)} ms</span></div>`;
+	if (prev) h += diffRow(delta(r.total, prev.total));
+	h += `<div class="t-row"><span>Peak memory</span><span>${r.memory.toFixed(1)} MB</span></div>`;
+	if (prev) h += diffRow(delta(r.memory * 1024, prev.memory * 1024));
 	return h;
 }
 function highlightRow(hash) {
@@ -336,70 +182,33 @@ function notEnoughData(host) {
 	host.innerHTML = '<div class="empty">Not enough measurements yet</div>';
 }
 
-// --- tiles ---
-(function tiles() {
-	if (!ok.length) return;
-	const last = ok[ok.length - 1], prev = ok.length > 1 ? ok[ok.length - 2] : null;
-	const best = ok.reduce((a, b) => b.total < a.total ? b : a);
-	const first = ok[0];
-	const trend = (last.total - first.total) / first.total * 100;
-	const vs = (cur, old) => prev ? `${delta(cur, old)} vs <span class="mono">${prev.short}</span>` : 'first measurement';
-	document.getElementById('tiles').innerHTML = `
-		<div class="card tile"><div class="label">Latest total</div>
-			<div class="value">${fmt(last.total)}<small>ms</small></div>
-			<div class="sub">${vs(last.total, prev && prev.total)}</div></div>
-		<div class="card tile"><div class="label">Best total</div>
-			<div class="value">${fmt(best.total)}<small>ms</small></div>
-			<div class="sub"><a class="mono" href="${REPO}${best.hash}">${best.short}</a> · ${best.date}</div></div>
-		<div class="card tile"><div class="label">Since ${first.date}</div>
-			<div class="value">${trend > 0 ? '+' : ''}${trend.toFixed(1)}<small>%</small></div>
-			<div class="sub">${ok.length} commits measured</div></div>
-		<div class="card tile"><div class="label">Peak memory</div>
-			<div class="value">${last.rss.toFixed(1)}<small>MB</small></div>
-			<div class="sub">${vs(last.rss * 1024, prev && prev.rss * 1024)}</div></div>
-		<div class="card tile"><div class="label">Throughput</div>
-			<div class="value">${fmt(last.lps)}<small>lines/s</small></div>
-			<div class="sub">${fmt(last.srcLines)} source lines</div></div>`;
-})();
-
 // --- line chart ---
 function drawLine(id, key, label) {
 	const host = document.getElementById(id);
 	host.innerHTML = '';
-	if (ok.length < 2) return notEnoughData(host);
+	if (shown.length < 2) return notEnoughData(host);
 	const W = host.clientWidth, H = 200, m = { t: 10, r: 8, b: 22, l: 44 };
 	const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img', 'aria-label': label }, host);
-	const vals = ok.map(r => r[key]);
+	const vals = shown.map(r => r[key]);
 	let lo = Math.min(...vals), hi = Math.max(...vals);
 	const pad = Math.max((hi - lo) * 0.15, hi * 0.02);
 	const tick = niceTick(hi - lo + 2 * pad);
 	lo = Math.max(0, Math.floor((lo - pad) / tick) * tick); hi = Math.ceil((hi + pad) / tick) * tick;
-	const x = (i) => m.l + (W - m.l - m.r) * (i / (ok.length - 1));
+	const x = (i) => m.l + (W - m.l - m.r) * (i / (shown.length - 1));
 	const y = (v) => m.t + (H - m.t - m.b) * (1 - (v - lo) / (hi - lo));
 	const ax = el('g', { class: 'axis' }, svg);
 	for (let v = lo; v <= hi + tick / 1e6; v += tick) {
 		el('line', { class: 'gridline', x1: m.l, x2: W - m.r, y1: y(v), y2: y(v) }, ax);
 		el('text', { x: m.l - 6, y: y(v) + 4, 'text-anchor': 'end' }, ax).textContent = fmt(Math.round(v * 10) / 10);
 	}
-	const step = Math.max(1, Math.ceil(ok.length / Math.max(2, Math.floor(W / 110))));
-	ok.forEach((r, i) => {
-		if ((i % step === 0 && ok.length - 1 - i >= step / 2) || i === ok.length - 1) {
-			el('text', { x: x(i), y: H - 6, 'text-anchor': i === 0 ? 'start' : i === ok.length - 1 ? 'end' : 'middle' }, ax).textContent = r.date.slice(5);
+	const step = Math.max(1, Math.ceil(shown.length / Math.max(2, Math.floor(W / 110))));
+	shown.forEach((r, i) => {
+		if ((i % step === 0 && shown.length - 1 - i >= step / 2) || i === shown.length - 1) {
+			el('text', { x: x(i), y: H - 6, 'text-anchor': i === 0 ? 'start' : i === shown.length - 1 ? 'end' : 'middle' }, ax).textContent = r.date.slice(5);
 		}
 	});
-	const d = ok.map((r, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(r[key]).toFixed(1)}`).join('');
+	const d = shown.map((r, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(r[key]).toFixed(1)}`).join('');
 	el('path', { d, fill: 'none', stroke: css('--series-1'), 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
-
-	// regression / improvement markers (status color + glyph, never color alone)
-	const scale = key === 'rss' ? 1024 : 1;
-	ok.forEach((r, i) => {
-		if (!i || !isChange(r[key] * scale, ok[i - 1][key] * scale)) return;
-		const pct = (r[key] - ok[i - 1][key]) / ok[i - 1][key] * 100;
-		const up = pct > 0, cx = x(i), cy = y(r[key]);
-		el('circle', { cx, cy, r: 5, fill: css(up ? '--critical' : '--good'), stroke: css('--surface-1'), 'stroke-width': 2 }, svg);
-		el('text', { x: cx, y: up ? cy - 10 : cy + 18, 'text-anchor': 'middle', 'font-size': 11, fill: css(up ? '--critical-text' : '--good-text') }, svg)
-			.textContent = (up ? '▲ +' : '▼ ') + pct.toFixed(1) + '%';
-	});
 
 	const cross = el('line', { y1: m.t, y2: H - m.b, stroke: css('--text-muted'), 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0 }, svg);
 	const dot = el('circle', { r: 5, fill: css('--series-1'), stroke: css('--surface-1'), 'stroke-width': 2, opacity: 0 }, svg);
@@ -408,8 +217,8 @@ function drawLine(id, key, label) {
 	hit.addEventListener('mousemove', (e) => {
 		const bx = svg.getBoundingClientRect();
 		const px = (e.clientX - bx.left) * (W / bx.width);
-		const i = Math.max(0, Math.min(ok.length - 1, Math.round((px - m.l) / (W - m.l - m.r) * (ok.length - 1))));
-		const r = ok[i];
+		const i = Math.max(0, Math.min(shown.length - 1, Math.round((px - m.l) / (W - m.l - m.r) * (shown.length - 1))));
+		const r = shown[i];
 		cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1);
 		dot.setAttribute('cx', x(i)); dot.setAttribute('cy', y(r[key])); dot.setAttribute('opacity', 1);
 		tip.show(tipHtml(r), x(i) * bx.width / W, y(r[key]) * bx.height / H);
@@ -423,10 +232,10 @@ function drawStack() {
 	const host = document.getElementById('stack');
 	host.innerHTML = '';
 	document.getElementById('legend').innerHTML = STAGES.map(([, l, v]) => `<span><i style="background:var(${v})"></i>${l}</span>`).join('');
-	if (!ok.length) return notEnoughData(host);
+	if (!shown.length) return notEnoughData(host);
 	const W = host.clientWidth, H = 220, m = { t: 8, r: 8, b: 22, l: 44 };
 	const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img', 'aria-label': 'Time per compiler stage per commit' }, host);
-	const top = Math.max(...ok.map(r => STAGES.reduce((s, [k]) => s + r[k], 0)));
+	const top = Math.max(...shown.map(r => STAGES.reduce((s, [k]) => s + r[k], 0)));
 	const tick = niceTick(top);
 	const max = Math.ceil(top / tick) * tick;
 	const y = (v) => m.t + (H - m.t - m.b) * (1 - v / max);
@@ -435,19 +244,21 @@ function drawStack() {
 		el('line', { class: v ? 'gridline' : 'baseline', x1: m.l, x2: W - m.r, y1: y(v), y2: y(v) }, ax);
 		el('text', { x: m.l - 6, y: y(v) + 4, 'text-anchor': 'end' }, ax).textContent = fmt(v);
 	}
-	const slot = (W - m.l - m.r) / ok.length;
+	const slot = (W - m.l - m.r) / shown.length;
 	const bw = Math.max(3, Math.min(22, slot - 2));
-	const step = Math.max(1, Math.ceil(ok.length / Math.max(2, Math.floor(W / 110))));
+	const step = Math.max(1, Math.ceil(shown.length / Math.max(2, Math.floor(W / 110))));
 	const tip = tooltipFor(host);
-	ok.forEach((r, i) => {
+	shown.forEach((r, i) => {
 		const cx = m.l + slot * i + slot / 2;
 		const g = el('g', {}, svg);
-		let acc = 0;
-		STAGES.forEach(([k, , v], si) => {
-			const y0 = y(acc), y1 = y(acc + r[k]);
-			acc += r[k];
-			const h = Math.max(0, y0 - y1 - (si ? 2 : 0)); // 2px surface gap between segments
-			const isTop = si === STAGES.length - 1;
+		// Stack in pixels so that small stages stay visible (at least 2px) despite the 2px gaps
+		const segs = STAGES.filter(([k]) => r[k] > 0);
+		let base = y(0);
+		segs.forEach(([k, , v], si) => {
+			const h = Math.max(2, y(0) - y(r[k]) - (si ? 2 : 0));
+			const y1 = base - (si ? 2 : 0) - h;
+			base = y1;
+			const isTop = si === segs.length - 1;
 			const rx = isTop ? Math.min(4, bw / 2, h) : 0;
 			if (isTop) {
 				// rounded top cap only
@@ -457,7 +268,7 @@ function drawStack() {
 				el('rect', { x: cx - bw / 2, y: y1, width: bw, height: h, fill: css(v) }, g);
 			}
 		});
-		if ((i % step === 0 && ok.length - 1 - i >= step / 2) || i === ok.length - 1) {
+		if ((i % step === 0 && shown.length - 1 - i >= step / 2) || i === shown.length - 1) {
 			el('text', { x: cx, y: H - 6, 'text-anchor': 'middle' }, ax).textContent = r.date.slice(5);
 		}
 		const hit = el('rect', { x: cx - slot / 2, y: m.t, width: slot, height: H - m.t - m.b, fill: 'transparent' }, svg);
@@ -470,22 +281,26 @@ function drawStack() {
 	});
 }
 
-// --- table filter (rows are rendered by bait fast) ---
-document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
-	const changedOnly = b.dataset.f === 'changed';
-	document.querySelectorAll('.filters button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
-	document.querySelectorAll('#rows tr').forEach(tr => { tr.hidden = changedOnly && !tr.dataset.changed; });
+// --- range (table rows are rendered by bait fast) ---
+function filterRows() {
+	const inRange = new Set(shown.map(r => r.hash));
+	document.querySelectorAll('#rows tr').forEach(tr => { tr.hidden = !inRange.has(tr.dataset.hash); });
+}
+document.querySelectorAll('#range button').forEach(b => b.addEventListener('click', () => {
+	document.querySelectorAll('#range button').forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+	shown = b.dataset.r === 'all' ? ok : recent;
+	filterRows();
+	drawAll();
 }));
 
 function drawAll() {
-	drawLine('line', 'total', 'Total self-compile time per commit');
-	drawLine('mem', 'rss', 'Peak memory per commit');
+	drawLine('line', 'total', 'Self-compile time [ms]');
+	drawLine('mem', 'memory', 'Peak memory [MB]');
 	drawStack();
 }
+filterRows();
 drawAll();
 let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(drawAll, 100); });
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
-new MutationObserver(drawAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
 </script>
 </body>
 </html>
