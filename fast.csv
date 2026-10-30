@@ -1,0 +1,11 @@
+hash,date,total,parse,depgraph,check,transform,gen,max_rss_kb,out_lines,out_bytes,src_lines,subject
+5078bec55acdce36a9d12bdee983db776a774c16,2026-08-27,,,,,,,,,,,"gen: migrate to strings.Builder (#355)"
+36d3c4dec057a132d759c3d94573ab12d5bcc891,2026-10-12,,,,,,,,,,,"os [c]: fix ls and exec accessing freed string (#356)"
+ec5e5cf91e53ab19894ec39007e0d92c1bc78832,2026-10-12,,,,,,,,,,,"strings.builder: fix more regressions from #355 (#357)"
+213098d7dcee3acb517e9d47cec31ef0c99e65eb,2026-10-19,,,,,,,,,,,"gen [js]: fix number comparisons returning numbers (#358)"
+706a6f6ac496a531096eba160433c6ba79f4ec6c,2026-10-19,,,,,,,,,,,"jsgen: fix octal escapes in interpolated strings (#360)"
+aa230068af6639c60caffacd68edf080dddd3ca4,2026-10-19,,,,,,,,,,,"gen/js: truncate narrowing integer casts (#361)"
+f5b52f05f9492b7ed9ee7db883efee9d57b41dea,2026-10-19,,,,,,,,,,,"builtin [js]: fix i8 and i16 wrap (#359)"
+8c56933fc23433d85a1fe8b43887405282444844,2026-10-19,390,164,0,74,12,101,108228,12627,459109,12876,"builtin, gen [js]: fix i64/u64 default values and all_after (#362)"
+f742a4db94772b039cbab98780b9f7653f0dca9e,2026-10-30,394,164,,77,12,101,106032,12625,459024,12875,"tools: add fast.bt (#363)"
+ac1a49408369d5a78d7f9232a5129ca367dffe53,2026-10-30,391,161,,76,10,98,109028,12625,459024,12875,"ci/fast: use bun 1.4.4 (#364)"
