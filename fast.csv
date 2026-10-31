@@ -46,3 +46,6 @@ d40400c312320af6c229d4af8c476596009b3bde,2026-10-31,394,170,,68,9,107,110520,134
 31702eb087e6166c000c2ad36c07aee9e4526bbb,2026-10-31,,,,,,,,,,,"gen [c]: fix str() of pointers"
 e49fc6e96abf5c8aba2d685ee4cfe38c1ce95b10,2026-10-31,,,,,,,,,,,"checker: support calling variables of function types"
 3176ee10f9fbc435e17d5fc27d422f36e9642d88,2026-10-31,,,,,,,,,,,"checker: support aliases of function types"
+64a71cb765c87e7fb7eb4fe70600a86eb301dd6a,2026-10-31,302,125,,50,10,84,109888,13623,501357,14007,"checker: reject anonymous functions capturing locals"
+3b1efa5bab64d93828ebda90e38732559f1791c9,2026-10-31,301,124,,49,8,87,113904,13624,501542,14009,"gen [c]: write anonymous functions after globals"
+6373af5f24423f3843679e4b7bc02e719870d1af,2026-10-31,303,125,,50,8,87,116080,13624,501542,14009,"ci: run all of tests/other on C"
