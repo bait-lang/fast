@@ -49,3 +49,5 @@ e49fc6e96abf5c8aba2d685ee4cfe38c1ce95b10,2026-10-31,,,,,,,,,,,"checker: support 
 64a71cb765c87e7fb7eb4fe70600a86eb301dd6a,2026-10-31,302,125,,50,10,84,109888,13623,501357,14007,"checker: reject anonymous functions capturing locals"
 3b1efa5bab64d93828ebda90e38732559f1791c9,2026-10-31,301,124,,49,8,87,113904,13624,501542,14009,"gen [c]: write anonymous functions after globals"
 6373af5f24423f3843679e4b7bc02e719870d1af,2026-10-31,303,125,,50,8,87,116080,13624,501542,14009,"ci: run all of tests/other on C"
+2e3ce2b94da2c433691f031b178a6b16894ff08d,2026-11-10,1790,247,,848,14,628,128944,14431,543280,14346,"JS: work on correcting reference handling (#372)"
+e80be445ffdc15265b76f1bb3c054a64095428d5,2026-11-10,2153,230,,1076,91,687,140472,14574,556954,14507,"fix pass by reference with mut parameters and for-mut loops (#373)"
